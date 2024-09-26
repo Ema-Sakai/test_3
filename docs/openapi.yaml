@@ -1,0 +1,229 @@
+openapi: 3.0.3
+info:
+  title: Cat Cafe Reservation API
+  description: |-
+    猫カフェの予約システムのAPI仕様書です。
+    予約の作成、取得、更新、削除機能を提供します。
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: reservations
+    description: 予約に関する操作
+paths:
+  /reservations:
+    post:
+      tags:
+        - reservations
+      summary: 新規予約の作成
+      description: 新しい予約を作成します。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+  /reservations/{reservationNumber}:
+    get:
+      tags:
+        - reservations
+      summary: 予約情報の取得
+      description: 指定された予約番号の予約情報を取得します。
+      parameters:
+        - name: reservationNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - reservations
+      summary: 予約情報の更新
+      description: 指定された予約番号の予約情報を更新します。
+      parameters:
+        - name: reservationNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationUpdateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - reservations
+      summary: 予約の削除
+      description: 指定された予約番号の予約を削除します。
+      parameters:
+        - name: reservationNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 予約情報を削除いたしました。
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ReservationRequest:
+      type: object
+      required:
+        - name
+        - reservationDate
+        - reservationTime
+        - email
+        - phone
+      properties:
+        name:
+          type: string
+          maxLength: 50
+          example: 猫好き太郎
+        reservationDate:
+          type: string
+          format: date
+          example: '2024-07-20'
+        reservationTime:
+          type: string
+          format: time
+          example: '11:30'
+        email:
+          type: string
+          format: email
+          example: nekoLover@example.com
+        phone:
+          type: string
+          pattern: ^[0-9]{11}$
+          example: '08012345678'
+    ReservationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 以下の通り予約が完了しました。
+        reservationDate:
+          type: string
+          example: 2024年07月20日
+        reservationTime:
+          type: string
+          example: 11時30分
+        name:
+          type: string
+          example: 猫好き太郎
+        email:
+          type: string
+          example: nekoLover@example.com
+        phone:
+          type: string
+          example: '08012345678'
+        reservationNumber:
+          type: string
+          example: 01H2XD3NSJKGDAEMON3B7EDVGE
+    Reservation:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 猫好き太郎
+        reservationDate:
+          type: string
+          format: date
+          example: '2024-07-20'
+        reservationTime:
+          type: string
+          format: time
+          example: '11:30'
+        email:
+          type: string
+          example: nekoLover@example.com
+        phone:
+          type: string
+          example: '08012345678'
+        reservationNumber:
+          type: string
+          example: 01H2XD3NSJKGDAEMON3B7EDVGE
+    ReservationUpdateRequest:
+      type: object
+      properties:
+        reservationDate:
+          type: string
+          format: date
+          example: '2024-07-21'
+        reservationTime:
+          type: string
+          format: time
+          example: '13:00'
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: string
