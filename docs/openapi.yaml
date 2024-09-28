@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Cat Cafe Reservation API
   description: |-
-    猫カフェの予約システムのAPI仕様書です。
+    猫カフェ予約システムのAPI仕様書です。
     予約の作成、取得、更新、削除機能を提供します。
   version: 1.0.0
 servers:
@@ -15,21 +15,29 @@ paths:
     post:
       tags:
         - reservations
-      summary: 新規予約の作成
-      description: 新しい予約を作成します。
+      summary: 新規予約情報の作成
+      description: 新しい予約情報を作成します。
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReservationRequest'
+              $ref: '#/components/schemas/CreateReservationRequest'
       responses:
         '201':
           description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationResponse'
+                $ref: '#/components/schemas/CreateReservationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/CreateReservationValidationErrorResponse'
+                  - $ref: '#/components/schemas/CreateReservationEmptyFieldErrorResponse'
   /reservations/{reservationNumber}:
     get:
       tags:
@@ -42,66 +50,81 @@ paths:
           required: true
           schema:
             type: string
+            minLength: 26
+            maxLength: 26
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Reservation'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-    put:
-      tags:
-        - reservations
-      summary: 予約情報の更新
-      description: 指定された予約番号の予約情報を更新します。
-      parameters:
-        - name: reservationNumber
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ReservationUpdateRequest'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ReservationResponse'
+                $ref: '#/components/schemas/GetReservationResponse'
         '400':
           description: Bad Request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/GetReservationErrorResponse'
         '404':
           description: Not Found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-    delete:
+                $ref: '#/components/schemas/ReservationNotFoundErrorResponse'
+    put:
       tags:
         - reservations
-      summary: 予約の削除
-      description: 指定された予約番号の予約を削除します。
+      summary: 予約情報の更新
+      description: 指定された予約番号の予約日時を更新します。
       parameters:
         - name: reservationNumber
           in: path
           required: true
           schema:
             type: string
+            minLength: 26
+            maxLength: 26
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReservationRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateReservationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/UpdateReservationErrorResponse'
+                  - $ref: '#/components/schemas/UpdateReservationValidationErrorResponse'
+                  - $ref: '#/components/schemas/UpdateReservationNoChangeErrorResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationNotFoundErrorResponse'
+    delete:
+      tags:
+        - reservations
+      summary: 予約情報の削除
+      description: 指定された予約番号の予約情報を削除します。
+      parameters:
+        - name: reservationNumber
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 26
+            maxLength: 26
       responses:
         '200':
           description: OK
@@ -113,15 +136,21 @@ paths:
                   message:
                     type: string
                     example: 予約情報を削除いたしました。
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteReservationErrorResponse'
         '404':
           description: Not Found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ReservationNotFoundErrorResponse'
 components:
   schemas:
-    ReservationRequest:
+    CreateReservationRequest:
       type: object
       required:
         - name
@@ -133,11 +162,11 @@ components:
         name:
           type: string
           maxLength: 50
-          example: 猫好き太郎
+          example: 猫大好き猫吸いマン
         reservationDate:
           type: string
           format: date
-          example: '2024-07-20'
+          example: '2024-12-12'
         reservationTime:
           type: string
           format: time
@@ -145,36 +174,88 @@ components:
         email:
           type: string
           format: email
-          example: nekoLover@example.com
+          example: nekoforeverLoveLoveLove@example.com
         phone:
           type: string
           pattern: ^[0-9]{11}$
           example: '08012345678'
-    ReservationResponse:
+    CreateReservationResponse:
       type: object
       properties:
         message:
           type: string
           example: 以下の通り予約が完了しました。
+        name:
+          type: string
+          example: 猫大好き猫吸いマン
         reservationDate:
           type: string
-          example: 2024年07月20日
+          example: 2024年12月12日
         reservationTime:
           type: string
           example: 11時30分
-        name:
-          type: string
-          example: 猫好き太郎
         email:
           type: string
-          example: nekoLover@example.com
+          example: nekoforeverLoveLoveLove@example.com
         phone:
           type: string
           example: '08012345678'
         reservationNumber:
           type: string
           example: 01H2XD3NSJKGDAEMON3B7EDVGE
-    Reservation:
+    CreateReservationValidationErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Bad Request
+        message:
+          type: string
+          example: 入力内容に誤りがあります。
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            insert.reservationRequest.name: "予約名は50文字以内で入力してください。"
+            insert.reservationRequest.reservationDate: "明日以降のご希望日を選択してください。"
+            insert.reservationRequest.reservationTime: "予約時間は11:00から14:00までの間で、30分単位で選択してください。（例: 11:00、11:30）"
+            insert.reservationRequest.email: "有効なメールアドレスを入力してください。"
+            insert.reservationRequest.phone: "電話番号を数字のみ11桁で入力してください。（例：09012345678）"
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-09-27T00:00:00.640648200+09:00[Asia/Tokyo]'
+        status:
+          type: integer
+          example: 400
+    CreateReservationEmptyFieldErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Bad Request
+        message:
+          type: string
+          example: 入力内容に誤りがあります。
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            insert.reservationRequest.name: "予約名の入力は必須です。"
+            insert.reservationRequest.reservationDate: "ご希望の予約日選択は必須です。"
+            insert.reservationRequest.reservationTime: "ご希望の予約時間を選択してください。"
+            insert.reservationRequest.email: "メールアドレスの入力は必須です。"
+            insert.reservationRequest.phone: "電話番号の入力は必須です。"
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-09-27T00:00:00.640648200+09:00[Asia/Tokyo]'
+        status:
+          type: integer
+          example: 400
+    GetReservationResponse:
       type: object
       properties:
         id:
@@ -182,48 +263,178 @@ components:
           example: 1
         name:
           type: string
-          example: 猫好き太郎
+          example: 猫大好き猫吸いマン
         reservationDate:
           type: string
-          format: date
-          example: '2024-07-20'
+          example: '2024-12-12'
         reservationTime:
           type: string
-          format: time
-          example: '11:30'
+          example: '11:30:00'
         email:
           type: string
-          example: nekoLover@example.com
+          example: nekoforeverLoveLoveLove@example.com
         phone:
           type: string
           example: '08012345678'
         reservationNumber:
           type: string
           example: 01H2XD3NSJKGDAEMON3B7EDVGE
-    ReservationUpdateRequest:
+    GetReservationErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Bad Request
+        message:
+          type: string
+          example: 入力内容に誤りがあります。
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            getReservation.reservationNumber: "26桁の予約番号を入力してください。"
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-09-27T00:00:00.640648200+09:00[Asia/Tokyo]'
+        status:
+          type: integer
+          example: 400
+    UpdateReservationRequest:
       type: object
       properties:
         reservationDate:
           type: string
           format: date
-          example: '2024-07-21'
+          example: '2024-12-25'
         reservationTime:
           type: string
           format: time
           example: '13:00'
-    ErrorResponse:
+    UpdateReservationResponse:
       type: object
       properties:
-        timestamp:
-          type: string
-          format: date-time
-        status:
-          type: integer
-        error:
-          type: string
         message:
           type: string
+          example: 以下の通り予約情報が更新されました。
+        reservationDate:
+          type: string
+          example: 2024年12月25日
+        reservationTime:
+          type: string
+          example: 13時00分
+        name:
+          type: string
+          example: 猫大好き猫吸いマン
+        email:
+          type: string
+          example: nekoforeverLoveLoveLove@example.com
+        phone:
+          type: string
+          example: '08012345678'
+        reservationNumber:
+          type: string
+          example: 01H2XD3NSJKGDAEMON3B7EDVGE
+    UpdateReservationErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Bad Request
+        message:
+          type: string
+          example: 入力内容に誤りがあります。
         errors:
           type: object
           additionalProperties:
             type: string
+          example:
+            updateReservation.reservationNumber: "26桁の予約番号を入力してください。"
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-09-27T00:00:00.640648200+09:00[Asia/Tokyo]'
+        status:
+          type: integer
+          example: 400
+    UpdateReservationValidationErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Bad Request
+        message:
+          type: string
+          example: 予約更新情報は無効な値です。
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            reservationDate: "明日以降のご希望日を選択してください。"
+            reservationTime: "予約時間は11:00から14:00までの間で、30分単位で選択してください。（例: 11:00、11:30）"
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-09-27T00:00:00.640648200+09:00[Asia/Tokyo]'
+        status:
+          type: integer
+          example: 400
+    UpdateReservationNoChangeErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Bad Request
+        message:
+          type: string
+          example: 現在の予約情報と同じです。変更する場合は、異なる予約日時を選択してください。
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-09-27T00:00:00.640648200+09:00[Asia/Tokyo]'
+        status:
+          type: integer
+          example: 400
+    DeleteReservationErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Bad Request
+        message:
+          type: string
+          example: 入力内容に誤りがあります。
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            deleteReservation.reservationNumber: "26桁の予約番号を入力してください。"
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-09-27T00:00:00.640648200+09:00[Asia/Tokyo]'
+        status:
+          type: integer
+          example: 400
+    ReservationNotFoundErrorResponse:
+      type: object
+      properties:
+        nextSteps:
+          type: string
+          example: 予約番号が正しいことを確認してください。問題が解決しない場合は、カスタマーサポートまでお問い合わせください。
+        error:
+          type: string
+          example: Not Found
+        message:
+          type: string
+          example: お探しの予約情報は存在しません。
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-09-27T00:00:00.640648200+09:00[Asia/Tokyo]'
+        status:
+          type: integer
+          example: 404
